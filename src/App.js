@@ -1,9 +1,10 @@
 import "./App.css";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axiosConfig from "./services/axiosConfig";
 
 function App() {
   const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
   let count = 0;
 
   useEffect(() => {
@@ -11,21 +12,19 @@ function App() {
   }, []);
 
   const fetchUsers = () => {
-    axios
-      .get("https://jsonplaceholder.typicode.com/users")
+    axiosConfig
+      .get()
       .then(({ data }) => setUsers(data))
-      .catch((err) => console.log(err));
+      .catch((err) => setError(err));
   };
 
   const deleteUser = (id) => {
     const originalUsers = [...users];
     setUsers(users.filter((user) => user.id !== id));
-    axios
-      .delete(`https://jsonplaceholder.typicode.com/users/${id}`)
-      .catch((err) => {
-        console.log(err);
-        setUsers(originalUsers);
-      });
+    axiosConfig.delete(`${id}`).catch((err) => {
+      setError(err);
+      setUsers(originalUsers);
+    });
   };
 
   const addUser = () => {
@@ -35,14 +34,37 @@ function App() {
       phone: "1-2355-34343-33",
     };
 
-    axios
-      .post("https://jsonplaceholder.typicode.com/users", newUser)
-      .then(({ data }) => setUsers([...users, data]))
-      .catch((err) => console.log(err));
+    axiosConfig
+      .post("", newUser)
+      .then(({ data: user }) => setUsers([...users, user]))
+      .catch((err) => setError(err));
+  };
+
+  const updateUser = (id) => {
+    const user = users.find((x) => x.id === id);
+    const modifiedUser = {
+      ...user,
+      name: "Pakistan",
+      email: "pakistan@abv.bg",
+    };
+
+    setUsers(users.map((user) => (user.id === id ? modifiedUser : user)));
+
+    axiosConfig.post("", modifiedUser).catch((err) => setError(err));
   };
 
   return (
     <>
+      {error && <p className="text-danger">{error.message}</p>}
+      <div>
+        <button
+          className="btn btn-outline-primary"
+          style={{ margin: "25px" }}
+          onClick={addUser}
+        >
+          Add user
+        </button>
+      </div>
       <table className="table table-bordered table-dark">
         <thead>
           <tr>
@@ -50,7 +72,8 @@ function App() {
             <th scope="col">Name</th>
             <th scope="col">Email</th>
             <th scope="col">Phone</th>
-            <th scope="col">Action</th>
+            <th scope="col">Delete</th>
+            <th scope="col">Update</th>
           </tr>
         </thead>
         <tbody>
@@ -63,25 +86,25 @@ function App() {
               <td>
                 <button
                   onClick={() => deleteUser(user.id)}
-                  className="btn btn-danger"
+                  className="btn btn-outline-danger"
                   style={{ cursor: "pointer" }}
                 >
                   Delete
+                </button>
+              </td>
+              <td>
+                <button
+                  onClick={() => updateUser(user.id)}
+                  className="btn btn-outline-success"
+                  style={{ cursor: "pointer" }}
+                >
+                  Update
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div>
-        <button
-          className="btn btn-primary"
-          style={{ marginLeft: "25px" }}
-          onClick={() => addUser()}
-        >
-          Add user
-        </button>
-      </div>
     </>
   );
 }
