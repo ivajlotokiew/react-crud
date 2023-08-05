@@ -1,6 +1,7 @@
 import "./App.css";
 import { useState, useEffect } from "react";
 import axiosConfig from "./services/axiosConfig";
+import userService from "./services/userService";
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -12,8 +13,8 @@ function App() {
   }, []);
 
   const fetchUsers = () => {
-    axiosConfig
-      .get()
+    userService
+      .getAllUsers()
       .then(({ data }) => setUsers(data))
       .catch((err) => setError(err));
   };
@@ -21,7 +22,7 @@ function App() {
   const deleteUser = (id) => {
     const originalUsers = [...users];
     setUsers(users.filter((user) => user.id !== id));
-    axiosConfig.delete(`${id}`).catch((err) => {
+    userService.deleteUser(id).catch((err) => {
       setError(err);
       setUsers(originalUsers);
     });
@@ -34,8 +35,10 @@ function App() {
       phone: "1-2355-34343-33",
     };
 
-    axiosConfig
-      .post("", newUser)
+    axiosConfig.post("/users/", newUser);
+
+    userService
+      .addUser(newUser)
       .then(({ data: user }) => setUsers([...users, user]))
       .catch((err) => setError(err));
   };
@@ -50,7 +53,7 @@ function App() {
 
     setUsers(users.map((user) => (user.id === id ? modifiedUser : user)));
 
-    axiosConfig.post("", modifiedUser).catch((err) => setError(err));
+    userService.updateUser(modifiedUser).catch((err) => setError(err));
   };
 
   return (
